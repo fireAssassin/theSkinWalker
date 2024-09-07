@@ -1,8 +1,7 @@
-print("SCRIPT MADE BY YHARIM>> Script is Open-Source,Feel Free to Alter it on Github.")
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 
 -- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
@@ -47,9 +46,10 @@ local nextPipeButton = createButton("Next Pipe", UDim2.new(0, 10, 0, 70))
 local nextSheetButton = createButton("Next Sheet", UDim2.new(0, 10, 0, 130))
 local skinnyButton = createButton("Teleport to Skinny", UDim2.new(0, 10, 0, 190))
 local shopButton = createButton("Teleport Shop", UDim2.new(0, 10, 0, 250))
+local fullbrightButton = createButton("Fullbright: OFF", UDim2.new(0, 10, 0, 310))
 
 -- Create toggle button
-local toggleButton = createButton("Toggle", UDim2.new(0, 10, 0, 310))
+local toggleButton = createButton("Toggle", UDim2.new(0, 10, 0, 370))
 toggleButton.Size = UDim2.new(0, 50, 0, 50)
 toggleButton.Text = "-"
 
@@ -193,6 +193,32 @@ local function tweenToShop()
     tween:Play()
 end
 
+-- Fullbright variables
+local defaultAmbient = Lighting.Ambient
+local defaultOutdoorAmbient = Lighting.OutdoorAmbient
+local defaultBrightness = Lighting.Brightness
+local defaultExposureCompensation = Lighting.ExposureCompensation
+local isFullbright = false
+
+-- Function to toggle Fullbright
+local function toggleFullbright()
+    isFullbright = not isFullbright
+    
+    if isFullbright then
+        Lighting.Ambient = Color3.new(1, 1, 1)
+        Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+        Lighting.Brightness = 2
+        Lighting.ExposureCompensation = 0.5
+        fullbrightButton.Text = "Fullbright: ON"
+    else
+        Lighting.Ambient = defaultAmbient
+        Lighting.OutdoorAmbient = defaultOutdoorAmbient
+        Lighting.Brightness = defaultBrightness
+        Lighting.ExposureCompensation = defaultExposureCompensation
+        fullbrightButton.Text = "Fullbright: OFF"
+    end
+end
+
 -- Connect buttons to their respective functions
 nextCircleButton.MouseButton1Click:Connect(function()
     tweenToScrap("Circle")
@@ -210,6 +236,8 @@ skinnyButton.MouseButton1Click:Connect(tweenToSkinny)
 
 shopButton.MouseButton1Click:Connect(tweenToShop)
 
+fullbrightButton.MouseButton1Click:Connect(toggleFullbright)
+
 -- Function to toggle button visibility
 local function toggleButtonsVisibility()
     local isVisible = nextCircleButton.Visible
@@ -218,6 +246,7 @@ local function toggleButtonsVisibility()
     nextSheetButton.Visible = not isVisible
     skinnyButton.Visible = not isVisible
     shopButton.Visible = not isVisible
+    fullbrightButton.Visible = not isVisible
     toggleButton.Text = isVisible and "+" or "-"
 end
 
@@ -243,4 +272,5 @@ addHoverEffect(nextPipeButton)
 addHoverEffect(nextSheetButton)
 addHoverEffect(skinnyButton)
 addHoverEffect(shopButton)
+addHoverEffect(fullbrightButton)
 addHoverEffect(toggleButton)
