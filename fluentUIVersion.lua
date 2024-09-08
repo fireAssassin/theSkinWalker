@@ -239,6 +239,118 @@ Tabs.Main:AddButton({
     end
 })
 
+-- Add the "Shop" Tab with an icon (for example, "shopping-cart" icon)
+local ShopTab = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" })
+
+-- Function to handle buying items
+local function buyItem(itemName)
+    local args = {
+        [1] = itemName
+    }
+
+    game:GetService("ReplicatedStorage").ShopRemotes.Buy:FireServer(unpack(args))
+end
+
+-- Add buttons for each item in the shop
+
+-- Rifle Ammo
+ShopTab:AddButton({
+    Title = "Buy Rifle Ammo",
+    Description = "Purchase Rifle Ammo",
+    Callback = function()
+        buyItem("Rifle Ammo")
+    end
+})
+
+-- Stun Grenade
+ShopTab:AddButton({
+    Title = "Buy Stun Grenade",
+    Description = "Purchase a Stun Grenade",
+    Callback = function()
+        buyItem("Stun Grenade")
+    end
+})
+
+-- Soda
+ShopTab:AddButton({
+    Title = "Buy Soda",
+    Description = "Purchase a Soda",
+    Callback = function()
+        buyItem("Soda")
+    end
+})
+
+-- Shovel
+ShopTab:AddButton({
+    Title = "Buy Shovel",
+    Description = "Purchase a Shovel",
+    Callback = function()
+        buyItem("Shovel")
+    end
+})
+
+-- Medkit
+ShopTab:AddButton({
+    Title = "Buy Medkit",
+    Description = "Purchase a Medkit",
+    Callback = function()
+        buyItem("Medkit")
+    end
+})
+
+-- Night Vision Goggles
+ShopTab:AddButton({
+    Title = "Buy Night Vision Goggles",
+    Description = "Purchase Night Vision Goggles",
+    Callback = function()
+        buyItem("Night Vision Goggles")
+    end
+})
+
+-- Thermal Vision Goggles
+ShopTab:AddButton({
+    Title = "Buy Thermal Vision Goggles",
+    Description = "Purchase Thermal Vision Goggles",
+    Callback = function()
+        buyItem("Thermal Vision Goggles")
+    end
+})
+
+-- Stun Gun
+ShopTab:AddButton({
+    Title = "Buy Stun Gun",
+    Description = "Purchase a Stun Gun",
+    Callback = function()
+        buyItem("Stun Gun")
+    end
+})
+
+-- Bear Trap
+ShopTab:AddButton({
+    Title = "Buy Bear Trap",
+    Description = "Purchase a Bear Trap",
+    Callback = function()
+        buyItem("Bear Trap")
+    end
+})
+
+-- Bear Spray
+ShopTab:AddButton({
+    Title = "Buy Bear Spray",
+    Description = "Purchase Bear Spray",
+    Callback = function()
+        buyItem("Bear Spray")
+    end
+})
+
+-- Landmine
+ShopTab:AddButton({
+    Title = "Buy Landmine",
+    Description = "Purchase a Landmine",
+    Callback = function()
+        buyItem("Landmine")
+    end
+})
 
 
 -- Add Settings Tab
