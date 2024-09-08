@@ -129,6 +129,40 @@ Tabs.Main:AddButton({
     end
 })
 
+-- Add "Infinite Power and Stamina" Button to Main Tab
+Tabs.Main:AddButton({
+    Title = "Infinite Power and Stamina",
+    Description = "Locks Power and Stamina to 100",
+    Callback = function()
+        -- Get the LocalPlayer
+        local player = game.Players.LocalPlayer
+
+        -- Wait for the character to load, in case it's not already
+        local character = player.Character or player.CharacterAdded:Wait()
+
+        -- Get the Stamina and Power values from the character
+        local staminaValue = character:WaitForChild("Stamina")
+        local powerValue = character:WaitForChild("Power")
+
+        -- Function to lock the given stat (Stamina or Power) to 100
+        local function lockStat(stat)
+            -- Set stat value to 100
+            stat.Value = 100
+
+            -- Whenever the stat value is changed, reset it to 100
+            stat.Changed:Connect(function()
+                if stat.Value ~= 100 then
+                    stat.Value = 100
+                end
+            end)
+        end
+
+        -- Call the function to lock both Stamina and Power
+        lockStat(staminaValue)
+        lockStat(powerValue)
+    end
+})
+
 Tabs.Main:AddButton({
     Title = "Toggle Fullbright",
     Description = "Toggles Fullbright mode",
