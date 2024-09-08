@@ -164,6 +164,35 @@ Tabs.Main:AddButton({
 })
 
 Tabs.Main:AddButton({
+    Title = "Infinite Rifle Ammo",
+    Description = "Locks Ammo to 6/6",
+    Callback = function()
+         -- Get the LocalPlayer
+local player = game.Players.LocalPlayer
+
+-- Get the Ammo value from the Hunting Rifle in the Backpack
+local huntingRifle = player.Backpack:WaitForChild("Hunting Rifle")
+local ammoValue = huntingRifle:WaitForChild("Ammo")
+
+-- Function to lock the Ammo value to 6
+local function lockAmmo()
+    -- Set ammo value to 6
+    ammoValue.Value = 6
+
+    -- Whenever the ammo value is changed, reset it to 100
+    ammoValue.Changed:Connect(function()
+        if ammoValue.Value ~= 6 then
+            ammoValue.Value = 6
+        end
+    end)
+end
+
+-- Call the function to lock Ammo
+lockAmmo()
+end
+})
+
+Tabs.Main:AddButton({
     Title = "Toggle Fullbright",
     Description = "Toggles Fullbright mode",
     Callback = function()
@@ -382,10 +411,17 @@ ShopTab:AddButton({
     Title = "Buy Landmine",
     Description = "Purchase a Landmine",
     Callback = function()
-        buyItem("Landmine")
+        buyItem("Land Mine")
     end
 })
 
+ShopTab:AddButton({
+    Title = "Buy Vest",
+    Description = "Purchase a Vest",
+    Callback = function()
+        buyItem("Vest")
+    end
+})
 
 -- Add Settings Tab
 SaveManager:SetLibrary(Fluent)
