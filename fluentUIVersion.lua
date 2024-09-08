@@ -302,6 +302,15 @@ Tabs.Main:AddButton({
     end
 })
 
+-- Add a button to execute Keyboard Script
+Tabs.Main:AddButton({
+    Title = "Execute Keyboard Script",
+    Description = "Runs the keyboard script for mobile access. By default,Use LeftControl for Keybind.",
+    Callback = function()
+        loadstring(game:HttpGet("https://gist.githubusercontent.com/RedZenXYZ/4d80bfd70ee27000660e4bfa7509c667/raw/da903c570249ab3c0c1a74f3467260972c3d87e6/KeyBoard%2520From%2520Ohio%2520Fr%2520Fr"))()
+    end
+})
+
 -- Add the "Shop" Tab with an icon (for example, "shopping-cart" icon)
 local ShopTab = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" })
 
