@@ -7,12 +7,12 @@ local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 
 local Window = Fluent:CreateWindow({
-    Title = "skinwalker script",
-    SubTitle = "by yharim",
+    Title = "XE Hub",
+    SubTitle = "by .X.",
     TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
+    Size = UDim2.fromOffset(580, 360),
     Acrylic = true,
-    Theme = "Dark",
+    Theme = "Darker",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
@@ -28,57 +28,7 @@ Tabs.Collect:AddButton({
     Title = "Collect All Scrap",
     Description = "Collects scrap 1 by 1",
     Callback = function()
-        local function tweenToPart(part)
-            local player = Players.LocalPlayer
-            local character = player.Character or player.CharacterAdded:Wait()
-            local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
-            if part then
-                for _, highlight in ipairs(workspace:GetDescendants()) do
-                    if highlight:IsA("Highlight") then
-                        highlight:Destroy()
-                    end
-                end
-
-                local highlight = Instance.new("Highlight")
-                highlight.FillColor = Color3.new(1, 1, 0)
-                highlight.OutlineColor = Color3.new(1, 0.5, 0)
-                highlight.FillTransparency = 0.5
-                highlight.OutlineTransparency = 0
-                highlight.Parent = part
-
-                local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-                local tween = TweenService:Create(humanoidRootPart, tweenInfo, { CFrame = part.CFrame })
-                tween:Play()
-                return tween
-            else
-                warn("Part not found!")
-            end
-        end
-
-        local function collectAllScrap()
-            local scrapFolder = workspace:FindFirstChild("Scrap")
-            if not scrapFolder then
-                warn("Scrap folder not found!")
-                return
-            end
-
-            local function collectNextScrap()
-                local scrapPart = scrapFolder:FindFirstChild("Circle") or scrapFolder:FindFirstChild("Pipe") or scrapFolder:FindFirstChild("Sheet")
-                if scrapPart then
-                    local tween = tweenToPart(scrapPart)
-                    tween.Completed:Wait()
-                    task.wait(0.5)
-                    collectNextScrap()
-                else
-                    print("All scrap collected!")
-                end
-            end
-
-            collectNextScrap()
-        end
-
-        collectAllScrap()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/jogosutora/theSkinWalker/refs/heads/main/scrapFarmV2.lua"))()
     end
 })
 
@@ -311,7 +261,7 @@ Tabs.Main:AddButton({
     end
 })
 
--- Add the "Shop" Tab with an icon (for example, "shopping-cart" icon)
+-- Add the "Shop" tab
 local ShopTab = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" })
 
 -- Function to handle buying items
@@ -325,112 +275,25 @@ end
 
 -- Add buttons for each item in the shop
 
--- Rifle Ammo
-ShopTab:AddButton({
-    Title = "Buy Rifle Ammo",
-    Description = "Purchase Rifle Ammo",
-    Callback = function()
-        buyItem("Rifle Ammo")
+local function addBuyButtons()
+    local prices = game:GetService("ReplicatedStorage"):FindFirstChild("Prices")
+    if prices then
+        for _, item in ipairs(prices:GetChildren()) do
+            ShopTab:AddButton({
+                Title = "Buy " .. item.Name,
+                Description = "Purchase " .. item.Name .. " for " .. item.Value .. " coins",
+                Callback = function()
+                    buyItem(item.Name)
+                end
+            })
+        end
+    else
+        warn("Prices folder not found in ReplicatedStorage")
     end
-})
+end
 
--- Stun Grenade
-ShopTab:AddButton({
-    Title = "Buy Stun Grenade",
-    Description = "Purchase a Stun Grenade",
-    Callback = function()
-        buyItem("Stun Grenade")
-    end
-})
-
--- Soda
-ShopTab:AddButton({
-    Title = "Buy Soda",
-    Description = "Purchase a Soda",
-    Callback = function()
-        buyItem("Soda")
-    end
-})
-
--- Shovel
-ShopTab:AddButton({
-    Title = "Buy Shovel",
-    Description = "Purchase a Shovel",
-    Callback = function()
-        buyItem("Shovel")
-    end
-})
-
--- Medkit
-ShopTab:AddButton({
-    Title = "Buy Medkit",
-    Description = "Purchase a Medkit",
-    Callback = function()
-        buyItem("Medkit")
-    end
-})
-
--- Night Vision Goggles
-ShopTab:AddButton({
-    Title = "Buy Night Vision Goggles",
-    Description = "Purchase Night Vision Goggles",
-    Callback = function()
-        buyItem("Night Vision Goggles")
-    end
-})
-
--- Thermal Vision Goggles
-ShopTab:AddButton({
-    Title = "Buy Thermal Vision Goggles",
-    Description = "Purchase Thermal Vision Goggles",
-    Callback = function()
-        buyItem("Thermal Vision Goggles")
-    end
-})
-
--- Stun Gun
-ShopTab:AddButton({
-    Title = "Buy Stun Gun",
-    Description = "Purchase a Stun Gun",
-    Callback = function()
-        buyItem("Stun Gun")
-    end
-})
-
--- Bear Trap
-ShopTab:AddButton({
-    Title = "Buy Bear Trap",
-    Description = "Purchase a Bear Trap",
-    Callback = function()
-        buyItem("Bear Trap")
-    end
-})
-
--- Bear Spray
-ShopTab:AddButton({
-    Title = "Buy Bear Spray",
-    Description = "Purchase Bear Spray",
-    Callback = function()
-        buyItem("Bear Spray")
-    end
-})
-
--- Landmine
-ShopTab:AddButton({
-    Title = "Buy Landmine",
-    Description = "Purchase a Landmine",
-    Callback = function()
-        buyItem("Land Mine")
-    end
-})
-
-ShopTab:AddButton({
-    Title = "Buy Vest",
-    Description = "Purchase a Vest",
-    Callback = function()
-        buyItem("Vest")
-    end
-})
+-- Call the function to add buy buttons
+addBuyButtons()
 
 -- Add Settings Tab
 SaveManager:SetLibrary(Fluent)
@@ -446,7 +309,7 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 
 Window:SelectTab(1)
 Fluent:Notify({
-    Title = "Fluent",
+    Title = "XE Hub",
     Content = "Script has been loaded.",
     Duration = 8
 })
