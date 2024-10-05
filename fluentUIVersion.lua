@@ -20,6 +20,43 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
+local success = true
+
+local acPlayerScripts = LocalPlayer.PlayerScripts:FindFirstChild("AC")
+if acPlayerScripts then
+    acPlayerScripts:Destroy()
+else
+    success = false
+end
+
+local bug = game.ReplicatedStorage:FindFirstChild("Anticheat")
+if bug then
+    bug:Destroy()
+else
+    success = false
+end
+
+local acStarterPlayerScripts = game.StarterPlayer.StarterPlayerScripts:FindFirstChild("AC")
+if acStarterPlayerScripts then
+    acStarterPlayerScripts:Destroy()
+else
+    success = false
+end
+
+if success then
+    Fluent:Notify({
+        Title = "Bypassed Anticheat",
+        Content = "The Anticheat has been bypassed..",
+        Duration = 4
+    })
+else
+    Fluent:Notify({
+        Title = "Bypass Failed",
+        Content = "The Anticheat Couldnt be bypassed.",
+        Duration = 4
+    })
+end
+
 -- Create Tabs
 local Tabs = {
     Collect = Window:AddTab({ Title = "Collect", Icon = "coins" }),
@@ -34,7 +71,176 @@ Tabs.Collect:AddButton({
     Title = "Collect All Scrap Gui",
     Description = "Collects scrap 1 by 1",
     Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/jogosutora/theSkinWalker/refs/heads/main/scrapFarmV2.lua"))()
+            
+        -- Create ScreenGui
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Parent = LocalPlayer.PlayerGui
+        
+        -- Create Main Frame
+        local MainFrame = Instance.new("Frame")
+        MainFrame.Size = UDim2.new(0, 200, 0, 80)
+        MainFrame.Position = UDim2.new(0.5, -100, 0.1, 0)
+        MainFrame.BackgroundTransparency = 1
+        MainFrame.Parent = ScreenGui
+        
+        -- Create Button
+        local Button = Instance.new("TextButton")
+        Button.Size = UDim2.new(1, 0, 0, 50)
+        Button.Position = UDim2.new(0, 0, 0, 0)
+        Button.Text = "Farming Scrap: OFF"
+        Button.Parent = MainFrame
+        
+        -- Style the button
+        Button.BackgroundColor3 = Color3.fromRGB(52, 152, 219)
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Button.Font = Enum.Font.SourceSansBold
+        Button.TextSize = 18
+        
+        -- Create Scrap Counter
+        local ScrapCounter = Instance.new("TextLabel")
+        ScrapCounter.Size = UDim2.new(1, 0, 0, 20)
+        ScrapCounter.Position = UDim2.new(0, 0, 1, 0)
+        ScrapCounter.Text = "0 Scraps Left"
+        ScrapCounter.Parent = MainFrame
+        ScrapCounter.BackgroundTransparency = 1
+        ScrapCounter.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ScrapCounter.Font = Enum.Font.SourceSans
+        ScrapCounter.TextSize = 14
+        
+        -- Create Close Button
+        local CloseButton = Instance.new("TextButton")
+        CloseButton.Size = UDim2.new(0, 20, 0, 20)
+        CloseButton.Position = UDim2.new(1, -20, 0, 0)
+        CloseButton.Text = "X"
+        CloseButton.Parent = MainFrame
+        CloseButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        CloseButton.Font = Enum.Font.SourceSansBold
+        CloseButton.TextSize = 14
+        
+        -- Create variables
+        local isFarming = false
+        local isDragging = false
+        local dragStart = nil
+        local startPos = nil
+        
+        -- Function to update scrap counter
+        local function updateScrapCounter()
+            local scrapCount = #workspace.Scrap:GetChildren()
+            ScrapCounter.Text = scrapCount .. " Scraps Left"
+        end
+        
+        -- Function to find the next available scrap
+        local function findNextScrap()
+            local scrapTypes = {"Circle", "Pipe", "Sheet"}
+            for _, scrapType in ipairs(scrapTypes) do
+                local scrap = workspace.Scrap:FindFirstChild(scrapType)
+                if scrap then
+                    return scrap
+                end
+            end
+            return nil
+        end
+        
+        -- Function to safely teleport player on top of scrap
+        local function safeTeleportToScrap(scrap)
+            local character = LocalPlayer.Character
+            if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+            
+            local rootPart = character.HumanoidRootPart
+            
+            -- Find the top surface of the scrap
+            local scrapSize = scrap.Size
+            local scrapCFrame = scrap.CFrame
+            local topCenterPosition = scrapCFrame * Vector3.new(0, scrapSize.Y/2, 0)
+            
+            -- Set a safe height above the scrap
+            local safeHeight = 5  -- Adjust this value as needed
+            local safePosition = topCenterPosition + Vector3.new(0, safeHeight, 0)
+            
+            -- Teleport the player
+            rootPart.CFrame = CFrame.new(safePosition)
+        end
+        
+        -- Function to toggle farming
+        local function toggleFarming()
+            isFarming = not isFarming
+            Button.Text = isFarming and "Farming Scrap: ON" or "Farming Scrap: OFF"
+            Button.BackgroundColor3 = isFarming and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(52, 152, 219)
+            
+            if isFarming then
+                spawn(function()
+                    while isFarming do
+                        updateScrapCounter()
+                        local currentScrap = findNextScrap()
+                        if currentScrap then
+                            safeTeleportToScrap(currentScrap)
+                            
+                            -- Wait for the current scrap to disappear
+                            while currentScrap.Parent == workspace.Scrap and isFarming do
+                                wait(0.1)
+                            end
+                        else
+                            -- No scrap found, wait before checking again
+                            wait(0.5)
+                        end
+                        
+                        -- Small delay before next iteration
+                        wait(0.1)
+                    end
+                end)
+            end
+        end
+        
+        -- Button click event
+        Button.MouseButton1Click:Connect(toggleFarming)
+        
+        -- Close button click event
+        CloseButton.MouseButton1Click:Connect(function()
+            ScreenGui:Destroy()
+        end)
+        
+        -- Dragging functionality
+        MainFrame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                isDragging = true
+                dragStart = input.Position
+                startPos = MainFrame.Position
+            end
+        end)
+        
+        UIS.InputChanged:Connect(function(input)
+            if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - dragStart
+                local newPosition = UDim2.new(
+                    startPos.X.Scale, 
+                    startPos.X.Offset + delta.X,
+                    startPos.Y.Scale, 
+                    startPos.Y.Offset + delta.Y
+                )
+                MainFrame.Position = newPosition
+            end
+        end)
+        
+        UIS.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                isDragging = false
+            end
+        end)
+        
+        -- Initial counter update
+        updateScrapCounter()
+        
+        -- Set up counter to update periodically
+        spawn(function()
+            while wait(1) do  -- Update every second
+                if ScreenGui.Parent then  -- Check if GUI still exists
+                    updateScrapCounter()
+                else
+                    break  -- Stop updating if GUI is destroyed
+                end
+            end
+        end)
     end
 })
 
@@ -90,7 +296,7 @@ Tabs.Collect:AddButton({
     end
 })
 
-Tabs.Main:AddButton({
+Tabs.Collect:AddButton({
     Title = "Instant Grab Candies & Scrap",
     Description = "Set all scraps and candies to be instantly grabbable",
     Callback = function()
@@ -110,10 +316,6 @@ Tabs.Main:AddButton({
                     end
                 end
             end
-        end
-
-        while wait(10) do
-            setInstantGrab()
         end
         
         Fluent:Notify({
@@ -229,7 +431,7 @@ Tabs.Main:AddButton({
 })
 
 Tabs.Main:AddButton({
-    Title = "delete bear traps",
+    Title = "Delete Bear Traps",
     Callback = function()
         local hazardsFolder = game.Workspace:FindFirstChild("Hazards")
 
