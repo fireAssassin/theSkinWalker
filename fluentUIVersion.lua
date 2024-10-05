@@ -317,7 +317,9 @@ Tabs.Collect:AddButton({
                 end
             end
         end
-        
+
+        setInstantGrab()
+            
         Fluent:Notify({
             Title = "Instant Grab Activated",
             Content = "All scraps and candies can now be grabbed instantly!",
