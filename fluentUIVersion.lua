@@ -298,35 +298,91 @@ Tabs.Collect:AddButton({
 
 Tabs.Collect:AddButton({
     Title = "Instant Grab Candies & Scrap",
-    Description = "Set all scraps and candies to be instantly grabbable",
+    Description = "Set all scraps and candies to be instantly grabbable, including new ones",
     Callback = function()
         local Workspace = game:GetService("Workspace")
         local scrapFolder = Workspace:WaitForChild("Scrap")
 
-        local function setInstantGrab()
+        local function setInstantGrab(item)
             local scrapTypes = {"Pipe", "Candy", "Sheet", "Circle"} -- Add other scrap names here
-            local items = scrapFolder:GetChildren()
-
-            for _, item in ipairs(items) do
-                if table.find(scrapTypes, item.Name) then
+            
+            if table.find(scrapTypes, item.Name) then
+                local function setupPrompt()
                     local prompt = item:FindFirstChild("Grab")
                     
                     if prompt and prompt:IsA("ProximityPrompt") then
                         prompt.HoldDuration = 0
+                    else
+                        -- If the prompt doesn't exist yet, wait for it to be added
+                        item.ChildAdded:Connect(function(child)
+                            if child.Name == "Grab" and child:IsA("ProximityPrompt") then
+                                child.HoldDuration = 0
+                            end
+                        end)
                     end
                 end
+                
+                setupPrompt()
+                
+                -- Handle case where the item might be replaced
+                item.Changed:Connect(function(property)
+                    if property == "Parent" and item.Parent == scrapFolder then
+                        setupPrompt()
+                    end
+                end)
             end
         end
 
-        setInstantGrab()
+        -- Set instant grab for existing items
+        for _, item in ipairs(scrapFolder:GetChildren()) do
+            setInstantGrab(item)
+        end
+        
+        -- Set instant grab for newly added items
+        scrapFolder.ChildAdded:Connect(setInstantGrab)
             
         Fluent:Notify({
             Title = "Instant Grab Activated",
-            Content = "All scraps and candies can now be grabbed instantly!",
+            Content = "All scraps and candies (including new ones) can now be grabbed instantly!",
             Duration = 5
         })
     end
 })
+
+Tabs.Collect:AddButton({
+    Title = "Show Candy Amount",
+    Description = "Display the current amount of candy for the local player",
+    Callback = function()
+        local player = Players.LocalPlayer
+        local playerStats = player:FindFirstChild("playerstats")
+        
+        if playerStats then
+            local candy = playerStats:FindFirstChild("Candy")
+            if candy then
+                local candyValue = candy.Value
+                
+                Fluent:Notify({
+                    Title = "Candy Amount",
+                    Content = "You currently have " .. tostring(candyValue) .. " candy.",
+                    Duration = 5
+                })
+            else
+                Fluent:Notify({
+                    Title = "Error",
+                    Content = "Candy stat not found for the local player.",
+                    Duration = 5
+                })
+            end
+        else
+            Fluent:Notify({
+                Title = "Error",
+                Content = "Player stats not found for the local player.",
+                Duration = 5
+            })
+        end
+    end
+})
+
 
 -- Add Buttons to "Main" Tab
 Tabs.Main:AddButton({
@@ -418,6 +474,46 @@ Tabs.Main:AddButton({
         -- disabled
     end
 })
+
+local weightLoopRunning = false
+
+local function setWeight(value)
+    local player = Players.LocalPlayer
+    local localPlayer = Workspace.Alive:FindFirstChild(player.Name)
+    if localPlayer and localPlayer:FindFirstChild("Weight") then
+        localPlayer.Weight.Value = value
+    end
+end
+
+local function weightLoop()
+    while espEnabled do
+        setWeight(0)
+        task.wait(0.0001)
+    end
+    weightLoopRunning = false
+end
+
+local function toggleWeight(value)
+    local player = Players.LocalPlayer
+    espEnabled = value
+    if espEnabled and not weightLoopRunning then
+        weightLoopRunning = true
+        weightLoop()
+    elseif not espEnabled then
+        setWeight(Workspace.Alive:FindFirstChild(player.Name).Weight.Value)
+    end
+end
+
+local NoWeightToggle = Tabs.Main:AddToggle("NoWeight", {
+    Title = "No Weight",
+    Default = false,
+    Callback = function(Value)
+        toggleWeight(Value)
+    end
+})
+
+toggleWeight(false)
+
 
 Tabs.Main:AddButton({
     Title = "Teleport Shop",
@@ -657,7 +753,48 @@ Tabs.Gamepass:AddButton({
     end
 })
 
-
+Tabs.Gamepass:AddButton({
+    Title = "Notify Owned Gamepasses",
+    Description = "Display a list of gamepasses owned by the local player",
+    Callback = function()
+        local player = Players.LocalPlayer
+        local gamepassesFolder = player:FindFirstChild("Gamepasses")
+        
+        if gamepassesFolder then
+            local ownedGamepasses = {}
+            for _, gamepass in ipairs(gamepassesFolder:GetChildren()) do
+                table.insert(ownedGamepasses, gamepass.Name)
+            end
+            
+            if #ownedGamepasses > 0 then
+                local gamepassList = table.concat(ownedGamepasses, ", ")
+                print("You Have Gamepasses: " .. gamepassList)
+                
+                Fluent:Notify({
+                    Title = "Owned Gamepasses",
+                    Content = "You have the gamepasses: " .. gamepassList,
+                    Duration = 7
+                })
+            else
+                print("You Have Gamepasses: None")
+                
+                Fluent:Notify({
+                    Title = "Owned Gamepasses",
+                    Content = "You don't own any gamepasses.",
+                    Duration = 5
+                })
+            end
+        else
+            print("Gamepasses folder not found.")
+            
+            Fluent:Notify({
+                Title = "Error",
+                Content = "Gamepasses folder not found for the local player.",
+                Duration = 5
+            })
+        end
+    end
+})
 
 -- tp tab
 Tabs.Teleport:AddButton({
@@ -696,6 +833,35 @@ Tabs.Teleport:AddButton({
         end
         
         teleportPlayer()
+    end
+})
+
+Tabs.Teleport:AddButton({
+    Title = "Teleport to Graveyard",
+    Description = "Teleport the local player to the Graveyard",
+    Callback = function()
+        local player = Players.LocalPlayer
+        local character = player.Character
+        local humanoidRootPart = character and character:FindFirstChild("HumanoidRootPart")
+        
+        local tpFolder = Workspace:FindFirstChild("TP")
+        local graveyardPart = tpFolder and tpFolder:FindFirstChild("Graveyard")
+        
+        if humanoidRootPart and graveyardPart then
+            humanoidRootPart.CFrame = graveyardPart.CFrame
+            
+            Fluent:Notify({
+                Title = "Teleportation Successful",
+                Content = "You have been teleported to the Graveyard.",
+                Duration = 5
+            })
+        else
+            Fluent:Notify({
+                Title = "Teleportation Failed",
+                Content = "Could not teleport to the Graveyard. Make sure you're spawned in the game.",
+                Duration = 5
+            })
+        end
     end
 })
 
@@ -915,7 +1081,7 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 
 Window:SelectTab(1)
 Fluent:Notify({
-    Title = "XE hub v2",
+    Title = "XE v2",
     Content = "Script has been loaded.",
     Duration = 8
 })
