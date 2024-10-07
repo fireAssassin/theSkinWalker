@@ -3,6 +3,7 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/d
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local scrapFolder = Workspace:WaitForChild("Scrap")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -12,8 +13,8 @@ local Lighting = game:GetService("Lighting")
 
 local Window = Fluent:CreateWindow({
     Title = "XE Hub V2",
-    SubTitle = "Last update:2024/10/05",
-    TabWidth = 160,
+    SubTitle = "Last update:2024/10/08",
+    TabWidth = 150,
     Size = UDim2.fromOffset(580, 360),
     Acrylic = true,
     Theme = "Darker",
@@ -417,14 +418,14 @@ Tabs.Main:AddButton({
 })
 
 Tabs.Main:AddButton({
-    Title = "ESP Skinny",
-    Description = "Adds ESP to Skinny and Mimic",
+    Title = "ESP Monsters",
+    Description = "Supports to Skinny, Mimic, and Headless Horseman",
     Callback = function()
-        local function addESP(model)
+        local function addESP(model, color)
             if not model:FindFirstChild("Highlight") then
                 local highlight = Instance.new("Highlight")
-                highlight.FillColor = Color3.new(1, 0, 0)
-                highlight.OutlineColor = Color3.new(0.5, 0, 0)
+                highlight.FillColor = color
+                highlight.OutlineColor = color:Lerp(Color3.new(0, 0, 0), 0.5)
                 highlight.FillTransparency = 0.5
                 highlight.OutlineTransparency = 0
                 highlight.Parent = model
@@ -440,38 +441,76 @@ Tabs.Main:AddButton({
                 textLabel.Size = UDim2.new(1, 0, 1, 0)
                 textLabel.BackgroundTransparency = 1
                 textLabel.Text = model.Name
-                textLabel.TextColor3 = Color3.new(1, 0, 0)
+                textLabel.TextColor3 = color
                 textLabel.TextStrokeTransparency = 0
                 textLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
                 textLabel.Font = Enum.Font.SourceSansBold
                 textLabel.TextScaled = true
                 textLabel.Parent = billboardGui
+
+                RunService.RenderStepped:Connect(function()
+                    local player = Players.LocalPlayer
+                    local character = player.Character
+                    if character and character:FindFirstChild("HumanoidRootPart") then
+                        local distance = (character.HumanoidRootPart.Position - model.PrimaryPart.Position).Magnitude
+                        textLabel.Text = string.format("%s [%.0fm away]", model.Name, distance)
+                    end
+                end)
             end
         end
 
+        local function addTracer(model, color)
+            local tracer = Drawing.new("Line")
+            tracer.Visible = false
+            tracer.Color = color
+            tracer.Thickness = 2
+            tracer.Transparency = 1
+
+            RunService.RenderStepped:Connect(function()
+                local player = Players.LocalPlayer
+                local character = player.Character
+                if character and character:FindFirstChild("HumanoidRootPart") and model.PrimaryPart then
+                    local vector, onScreen = workspace.CurrentCamera:WorldToViewportPoint(model.PrimaryPart.Position)
+                    if onScreen then
+                        tracer.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+                        tracer.To = Vector2.new(vector.X, vector.Y)
+                        tracer.Visible = true
+                    else
+                        tracer.Visible = false
+                    end
+                else
+                    tracer.Visible = false
+                end
+            end)
+        end
 
         local function checkAndAddESP()
             -- Check for Mimic in workspace
             local mimic = workspace:FindFirstChild("Mimic")
             if mimic then
-                addESP(mimic)
-                addTracer(mimic)
+                addESP(mimic, Color3.new(1, 0, 0))
+                addTracer(mimic, Color3.new(1, 0, 0))
             end
 
-            -- Check for Skinny in workspace.Alive
+            -- Check for Skinny and Headless Horseman in workspace.Alive
             local aliveFolder = workspace:FindFirstChild("Alive")
             if aliveFolder then
                 local skinny = aliveFolder:FindFirstChild("Skinny")
                 if skinny then
-                    addESP(skinny)
+                    addESP(skinny, Color3.new(1, 0, 0))
+                    addTracer(skinny, Color3.new(1, 0, 0))
+                end
+
+                local headlessHorseman = aliveFolder:FindFirstChild("Headless Horseman")
+                if headlessHorseman then
+                    addESP(headlessHorseman, Color3.new(1, 0.5, 0)) -- Orange color
+                    addTracer(headlessHorseman, Color3.new(1, 0.5, 0))
                 end
             end
         end
 
         checkAndAddESP()
 
-        -- continuiously check for new Mimic/Skinny model
-        -- disabled
     end
 })
 
@@ -525,6 +564,24 @@ Tabs.Main:AddButton({
         local shopCFrame = CFrame.new(-508.009735, 19.5572147, -704.674316)
 
         humanoidRootPart.CFrame = shopCFrame
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Instant Generator Switch",
+    Description = "Lets you Instantly Turn on generator.",
+    Callback = function()
+        local generatorPrompt = workspace.MapEnvironment.Interactable.Generator:WaitForChild("ProximityPrompt")
+        
+        -- Wait for the prompt to be enabled
+        while not generatorPrompt.Enabled do
+            task.wait(0.1)
+        end
+        
+        -- Set HoldDuration to 0 for instant activation
+        generatorPrompt.HoldDuration = 0
+        
+        print("Generator prompt modified for instant activation!")
     end
 })
 
@@ -641,28 +698,28 @@ Tabs.Main:AddButton({
     Description = "Locks Ammo to 6/6",
     Callback = function()
          -- Get the LocalPlayer
-local player = game.Players.LocalPlayer
-
--- Get the Ammo value from the Hunting Rifle in the Backpack
-local huntingRifle = player.Backpack:WaitForChild("Hunting Rifle")
-local ammoValue = huntingRifle:WaitForChild("Ammo")
-
--- Function to lock the Ammo value to 6
-local function lockAmmo()
-    -- Set ammo value to 6
-    ammoValue.Value = 6
-
-    -- Whenever the ammo value is changed, reset it to 100
-    ammoValue.Changed:Connect(function()
-        if ammoValue.Value ~= 6 then
+        local player = game.Players.LocalPlayer
+        
+        -- Get the Ammo value from the Hunting Rifle in the Backpack
+        local huntingRifle = player.Backpack:WaitForChild("Hunting Rifle")
+        local ammoValue = huntingRifle:WaitForChild("Ammo")
+        
+        -- Function to lock the Ammo value to 6
+        local function lockAmmo()
+            -- Set ammo value to 6
             ammoValue.Value = 6
+        
+            -- Whenever the ammo value is changed, reset it to 100
+            ammoValue.Changed:Connect(function()
+                if ammoValue.Value ~= 6 then
+                    ammoValue.Value = 6
+                end
+            end)
         end
-    end)
-end
-
--- Call the function to lock Ammo
-lockAmmo()
-end
+        
+        -- Call the function to lock Ammo
+        lockAmmo()
+    end
 })
 
 Tabs.Main:AddButton({
@@ -939,6 +996,19 @@ ArmoryTab:AddButton({
     end
 })
 
+ArmoryTab:AddButton({
+    Title = "Enable Hunting Rifle Prompt",
+    Description = "Allows you to interact hunting rifle even if armory is closed.",
+    Callback = function()
+        local riflePrompt = workspace.Armory.Armory.Hitbox.Claim:WaitForChild("ProximityPrompt")
+        
+        riflePrompt.Enabled = true
+        riflePrompt.HoldDuration = 0
+        
+        print("Hunting Rifle prompt enabled!")
+    end
+})
+
 -- Add a button to execute Infinite Yield
 Tabs.Main:AddButton({
     Title = "Execute Infinite Yield",
@@ -1086,4 +1156,6 @@ Fluent:Notify({
     Duration = 8
 })
 
+
 SaveManager:LoadAutoloadConfig()
+
