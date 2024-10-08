@@ -384,36 +384,65 @@ Tabs.Collect:AddButton({
     end
 })
 
+-- main
+
+local performanceSection = Tabs.Main:AddSection("Performance 🔋")
+
+performanceSection:AddButton({
+    Title = "[Halloween] Delete Halloween Decos",
+    Description = "Removes Halloween decorations to improve performance",
+    Callback = function()
+        local halloweenFolder = workspace:FindFirstChild("Halloween", true)
+        
+        if halloweenFolder then
+            halloweenFolder:Destroy()
+            Fluent:Notify({
+                Title = "Halloween Decorations Removed",
+                Content = "Successfully deleted Halloween decorations.",
+                Duration = 3
+            })
+        else
+            Fluent:Notify({
+                Title = "No Decorations Found",
+                Content = "Halloween decorations folder is not found. its possibly because the halloween event is over or error..",
+                Duration = 3
+            })
+        end
+    end
+})
 
 -- Add Buttons to "Main" Tab
 Tabs.Main:AddButton({
-    Title = "Teleport to Skinny",
-    Description = "Teleports player to Skinny",
+    Title = "Teleport to Monster [UPDATED]",
+    Description = "Instantly teleports player to Skinny, Mimic, or Headless Horseman",
     Callback = function()
         local player = Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        local skinnyModel = workspace:FindFirstChild("Skinny", true)
-        if skinnyModel then
-            for _, highlight in ipairs(workspace:GetDescendants()) do
-                if highlight:IsA("Highlight") then
-                    highlight:Destroy()
-                end
+        
+        local function teleportToMonster(monsterName)
+            local monster = workspace:FindFirstChild(monsterName, true)
+            if monster and monster:IsA("Model") and monster.PrimaryPart then
+                humanoidRootPart.CFrame = monster.PrimaryPart.CFrame
+                Fluent:Notify({
+                    Title = "Teleported!",
+                    Content = "You've been teleported to " .. monsterName,
+                    Duration = 3
+                })
+                return true
             end
-
-            local highlight = Instance.new("Highlight")
-            highlight.FillColor = Color3.new(1, 0, 1)
-            highlight.OutlineColor = Color3.new(0.5, 0, 0.5)
-            highlight.FillTransparency = 0.5
-            highlight.OutlineTransparency = 0
-            highlight.Parent = skinnyModel
-
-            local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local tween = TweenService:Create(humanoidRootPart, tweenInfo, { CFrame = skinnyModel:GetPivot() })
-            tween:Play()
-        else
-            warn("Skinny model not found!")
+            return false
         end
+
+        if teleportToMonster("Skinny") then return end
+        if teleportToMonster("Mimic") then return end
+        if teleportToMonster("Headless Horseman") then return end
+
+        Fluent:Notify({
+            Title = "Teleportation Failed",
+            Content = "No monsters found in the workspace",
+            Duration = 3
+        })
     end
 })
 
@@ -553,19 +582,6 @@ local NoWeightToggle = Tabs.Main:AddToggle("NoWeight", {
 
 toggleWeight(false)
 
-
-Tabs.Main:AddButton({
-    Title = "Teleport Shop",
-    Description = "Teleports player to the shop",
-    Callback = function()
-        local player = Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        local shopCFrame = CFrame.new(-508.009735, 19.5572147, -704.674316)
-
-        humanoidRootPart.CFrame = shopCFrame
-    end
-})
 
 Tabs.Main:AddButton({
     Title = "Instant Generator Switch",
@@ -722,28 +738,54 @@ Tabs.Main:AddButton({
     end
 })
 
-Tabs.Main:AddButton({
-    Title = "Toggle Fullbright",
-    Description = "Toggles Fullbright mode",
-    Callback = function()
-        local defaultAmbient = Lighting.Ambient
-        local defaultOutdoorAmbient = Lighting.OutdoorAmbient
-        local defaultBrightness = Lighting.Brightness
-        local defaultExposureCompensation = Lighting.ExposureCompensation
-        local isFullbright = false
+local isFullbrightEnabled = false
+local defaultLightingSettings = {
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    FogEnd = Lighting.FogEnd,
+    GlobalShadows = Lighting.GlobalShadows,
+    Ambient = Lighting.Ambient
+}
 
-        isFullbright = not isFullbright
-        if isFullbright then
-            Lighting.Ambient = Color3.new(1, 1, 1)
-            Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
-            Lighting.Brightness = 3
-            Lighting.TimeOfDay = "12:00"
+local function setFullbright(enable)
+    if enable then
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 100000
+        Lighting.GlobalShadows = false
+        Lighting.Ambient = Color3.fromRGB(178, 178, 178)
+    else
+        Lighting.Brightness = defaultLightingSettings.Brightness
+        Lighting.ClockTime = defaultLightingSettings.ClockTime
+        Lighting.FogEnd = defaultLightingSettings.FogEnd
+        Lighting.GlobalShadows = defaultLightingSettings.GlobalShadows
+        Lighting.Ambient = defaultLightingSettings.Ambient
+    end
+end
+
+local function updateFullbright()
+    while isFullbrightEnabled do
+        setFullbright(true)
+        task.wait(0.5)
+    end
+end
+
+Tabs.Main:AddToggle("FullbrightToggle", {
+    Title = "Toggle Fullbright",
+    Default = false,
+    Callback = function(Value)
+        isFullbrightEnabled = Value
+        if isFullbrightEnabled then
+            updateFullbright()
         else
-            Lighting.Ambient = defaultAmbient
-            Lighting.OutdoorAmbient = defaultOutdoorAmbient
-            Lighting.Brightness = defaultBrightness
-            Lighting.ExposureCompensation = defaultExposureCompensation
+            setFullbright(false)
         end
+        
+        Fluent:Notify({
+            Title = "Fullbright",
+            Content = isFullbrightEnabled and "Fullbright enabled" or "Fullbright disabled",
+            Duration = 2
+        })
     end
 })
 
@@ -1028,8 +1070,21 @@ Tabs.Main:AddButton({
     end
 })
 
--- Add the "Shop" Tab with an icon (for example, "shopping-cart" icon)
+-- Add the "Shop" Tab
 local ShopTab = Window:AddTab({ Title = "Shop", Icon = "shopping-cart" })
+
+ShopTab:AddButton({
+    Title = "Teleport Shop",
+    Description = "Teleports player to the shop",
+    Callback = function()
+        local player = Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local shopCFrame = CFrame.new(-508.009735, 19.5572147, -704.674316)
+
+        humanoidRootPart.CFrame = shopCFrame
+    end
+})
 
 ShopTab:AddButton({
     Title = "Open Shop UI",
@@ -1158,4 +1213,3 @@ Fluent:Notify({
 
 
 SaveManager:LoadAutoloadConfig()
-
